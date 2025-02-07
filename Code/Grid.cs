@@ -25,6 +25,11 @@ namespace SnakeGame
 		{
 			// TODO: Alusta _cells taulukko
 			_cells = new Cell[_width, _height];
+			// Laske se piste, josta taulukon rakentaminen aloitetaan. Koska 1. solu luodaan gridin vasempaan
+			// yläkulmaan, on meidän laskettava sitä koordinaattia vastaava piste. Oletetaan Gridin pivot-pisteen
+			// olevan kameran keskellä (https://en.wikipedia.org/wiki/Pivot_point).
+			Vector2 offset = new Vector2((_width * _cellSize.X) / 2, (_height * _cellSize.Y) / 2);
+
 			// Lataa Cell-scene. Luomme tästä uuden olion kutakin ruutua kohden.
 			PackedScene cellScene = ResourceLoader.Load<PackedScene>(_cellScenePath);
 			if (cellScene == null)
@@ -32,10 +37,6 @@ namespace SnakeGame
 				GD.PrintErr("Cell sceneä ei löydy! Gridiä ei voi luoda!");
 				return;
 			}
-
-			Vector2 viewportSize = GetViewportRect().Size;
-			Vector2 gridSize = new Vector2(_width * _cellSize.X, _height * _cellSize.Y);
-			Vector2 gridStart = (viewportSize - gridSize) / 2;
 
 			// Alustetaan Grid kahdella sisäkkäisellä for-silmukalla.
 			for (int x = 0; x < _width; ++x)
@@ -49,12 +50,13 @@ namespace SnakeGame
 
 					// TODO: Laske ja aseta ruudun sijainti niin maailman koordinaatistossa kuin
 					// ruudukonkin koordinaatistossa. Aseta ruudun sijainti käyttäen cell.Position propertyä.
-					Vector2 worldPosition = gridStart + new Vector2(
-						x * _cellSize.X + _cellSize.X / 2,
-						y * _cellSize.Y + _cellSize.Y / 2
+					Vector2I gridPosition = new Vector2I(x, y);
+					Vector2 worldPosition = new Vector2(
+						(x * _cellSize.X) - offset.X + (_cellSize.X / 2),
+						(y * _cellSize.Y) - offset.Y + (_cellSize.Y / 2)
 					);
 
-					cell.GridPosition = new Vector2I(x, y);
+					cell.GridPosition = gridPosition;
 					cell.Position = worldPosition;
 					// TODO: Tallenna ruutu tietorakenteeseen oikealle paikalle.
 					_cells[x, y] = cell;
