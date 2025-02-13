@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=4 uid="uid://cra40mujgqvmt"]
+[gd_scene load_steps=6 format=4 uid="uid://cx5x8c24278s3"]
 
 [ext_resource type="TileSet" uid="uid://jr8hmhq2xmtw" path="res://Art/MapTimes.tres" id="1_tg07n"]
 [ext_resource type="Script" path="res://Code/Level.cs" id="1_wh52b"]

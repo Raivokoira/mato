@@ -14,7 +14,7 @@ namespace SnakeGame
 
 		// TODO: Kirjoita julkinen property, joka mahdollistaa _width jäsenmuuttujan lukemisen,
 		// muttei asettamista. Anna propertyn nimeksi Width.
-		public int Width => _width;
+		//public int Width => _width;
 		// TODO: Kirjoita vastaava property _height jäsenmuuttujalle. Propertyn nimi tulee olla Height.
 		public int Width
 		{
@@ -69,8 +69,8 @@ namespace SnakeGame
 					cell.Position = new Vector2(x * _cellSize.X, y * _cellSize.Y) - offset;
 					cell.GridPosition = new Vector2I(x, y);
 
-					cell.GridPosition = gridPosition;
-					cell.Position = worldPosition;
+					//cell.GridPosition = gridPosition;
+					//cell.Position = worldPosition;
 					// TODO: Tallenna ruutu tietorakenteeseen oikealle paikalle.
 					_cells[x, y] = cell;
 					_freeCells.Add(cell);

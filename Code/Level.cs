@@ -16,15 +16,18 @@ namespace SnakeGame
 
 		[Export] private string _snakeScenePath = "res://Character/Snake.tscn";
 		[Export] private string _appleScenePath = "res://Levels/Collectables/Apple.tscn";
+		[Export] private string _nuclearWastePath = "res://Levels/Collectables/NuclearWaste.tscn";
 		[Export] private TopUIControl _topUIControl = null;
 
 		private PackedScene _snakeScene = null;
 		private PackedScene _appleScene = null;
+		private PackedScene _nuclearWasteScene = null;
 		private int _score = 0;
 		private Grid _grid = null;
 		private Snake _snake = null;
 		// Omenoita voi olla olemassa yksi kerrallaan.
 		private Apple _apple = null;
+		private NuclearWaste _nuclearWaste = null;
 
 		public int Score
 		{
@@ -97,6 +100,9 @@ namespace SnakeGame
 
 			// Luo omena
 			ReplaceApple();
+
+			// Luo nuclear waste
+			ReplaceNuclearWaste();
 		}
 
 		private Snake CreateSnake()
@@ -141,6 +147,36 @@ namespace SnakeGame
 			if (Grid.OccupyCell(_apple, freeCell.GridPosition))
 			{
 				_apple.SetPosition(freeCell.GridPosition);
+			}
+		}
+
+		public void ReplaceNuclearWaste()
+		{
+			if (_nuclearWaste != null)
+			{
+				Grid.ReleaseCell(_nuclearWaste.GridPosition);
+
+				_nuclearWaste.QueueFree();
+				_nuclearWaste = null;
+			}
+
+			if (_nuclearWasteScene == null)
+			{
+				_nuclearWasteScene = ResourceLoader.Load<PackedScene>(_nuclearWastePath);
+				if (_nuclearWasteScene == null)
+				{
+					GD.PrintErr("Can't load nuclear waste scene!");
+					return;
+				}
+			}
+
+			_nuclearWaste = _nuclearWasteScene.Instantiate<NuclearWaste>();
+			AddChild(_nuclearWaste);
+
+			Cell freeCell = Grid.GetRandomFreeCell();
+			if (Grid.OccupyCell(_nuclearWaste, freeCell.GridPosition))
+			{
+				_nuclearWaste.SetPosition(freeCell.GridPosition);
 			}
 		}
 	}
