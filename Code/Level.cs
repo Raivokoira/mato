@@ -79,6 +79,48 @@ namespace SnakeGame
 			ResetGame();
 		}
 
+		public override void _Process(double delta)
+		{
+			if (Input.IsActionJustPressed("RestartGame"))
+			{
+				RestartGame();
+			}
+		}
+
+		public void RestartGame()
+		{
+			// Tuhoa edellinen mato
+			if (_snake != null)
+			{
+				_snake.QueueFree();
+				_snake = null;
+			}
+
+			// Tuhoa kerättävät esineet
+			if (_apple != null)
+			{
+				_apple.QueueFree();
+				_apple = null;
+			}
+
+			if (_nuclearWaste != null)
+			{
+				_nuclearWaste.QueueFree();
+				_nuclearWaste = null;
+			}
+
+			// Luo uusi mato
+			_snake = CreateSnake();
+			AddChild(_snake);
+
+			// Nollaa pisteet
+			Score = 0;
+
+			// Luo uudet kerättävät esineet
+			ReplaceApple();
+			ReplaceNuclearWaste();
+		}
+
 		/// <summary>
 		/// Aloittaa uuden pelin.
 		/// </summary>
