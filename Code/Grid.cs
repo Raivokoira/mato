@@ -16,19 +16,35 @@ namespace SnakeGame
 		// muttei asettamista. Anna propertyn nimeksi Width.
 		public int Width => _width;
 		// TODO: Kirjoita vastaava property _height jäsenmuuttujalle. Propertyn nimi tulee olla Height.
+		public int Width
+		{
+			get { return _width; }
+		}
+		// Sama kuin
+		// public int Width => _width;
+
 		public int Height => _height;
+
+
 		// Tähän 2-uloitteiseen taulukkoon on tallennettu gridin solut. Alussa taulukkoa ei ole, vaan
 		// muuttujassa on tyhjä viittaus (null). Taulukko pitää luoda pelin alussa (esim. _Ready-metodissa).
 		private Cell[,] _cells = null;
+		// Ne solut, joissa ei ole mitään olioita.
+		private List<Cell> _freeCells = new List<Cell>();
 
 		public override void _Ready()
 		{
-			// TODO: Alusta _cells taulukko
-			_cells = new Cell[_width, _height];
+			_cells = new Cell[Width, Height];
+
 			// Laske se piste, josta taulukon rakentaminen aloitetaan. Koska 1. solu luodaan gridin vasempaan
 			// yläkulmaan, on meidän laskettava sitä koordinaattia vastaava piste. Oletetaan Gridin pivot-pisteen
 			// olevan kameran keskellä (https://en.wikipedia.org/wiki/Pivot_point).
 			Vector2 offset = new Vector2((_width * _cellSize.X) / 2, (_height * _cellSize.Y) / 2);
+
+			Vector2 halfNode = new Vector2(_cellSize.X / 2f, _cellSize.Y / 2f);
+
+			offset.X -= halfNode.X;
+			offset.Y -= halfNode.Y;
 
 			// Lataa Cell-scene. Luomme tästä uuden olion kutakin ruutua kohden.
 			PackedScene cellScene = ResourceLoader.Load<PackedScene>(_cellScenePath);
@@ -50,18 +66,99 @@ namespace SnakeGame
 
 					// TODO: Laske ja aseta ruudun sijainti niin maailman koordinaatistossa kuin
 					// ruudukonkin koordinaatistossa. Aseta ruudun sijainti käyttäen cell.Position propertyä.
-					Vector2I gridPosition = new Vector2I(x, y);
-					Vector2 worldPosition = new Vector2(
-						(x * _cellSize.X) - offset.X + (_cellSize.X / 2),
-						(y * _cellSize.Y) - offset.Y + (_cellSize.Y / 2)
-					);
+					cell.Position = new Vector2(x * _cellSize.X, y * _cellSize.Y) - offset;
+					cell.GridPosition = new Vector2I(x, y);
 
 					cell.GridPosition = gridPosition;
 					cell.Position = worldPosition;
 					// TODO: Tallenna ruutu tietorakenteeseen oikealle paikalle.
 					_cells[x, y] = cell;
+					_freeCells.Add(cell);
+
+					GD.Print($"Lapsi luotu koordinaattiin X: {x}, Y: {y}");
 				}
 			}
+		}
+
+		/// <summary>
+		/// Palauttaa gridin sijaintia vastaavan maailman koordinaatin
+		/// </summary>
+		/// <param name="gridPosition">Sijainti gridillä</param>
+		/// <param name="worldPosition">Out-parametri, johon asetetaan maailman koordinaatti</param>
+		/// <returns>True, jos gridPositon on laillinen koordinaatti, false muuten.</returns>
+		public bool GetWorldPosition(Vector2I gridPosition, out Vector2 worldPosition)
+		{
+			if (IsInvalidCoordinate(gridPosition))
+			{
+				worldPosition = Vector2.Zero;
+				// Koordinaatti ei ole gridillä
+				return false;
+			}
+
+			// Olettaa Gridin olevan 0,0 koordinaatissa. Voi käyttää myös GlobalPositionia.
+			worldPosition = _cells[gridPosition.X, gridPosition.Y].Position;
+			return true;
+		}
+
+		private bool IsInvalidCoordinate(Vector2I gridPosition)
+		{
+			return gridPosition.X < 0 || gridPosition.Y < 0
+				|| gridPosition.X >= Width || gridPosition.Y >= Height;
+		}
+
+		/// <summary>
+		/// Varaa solun occupier-oliolle.
+		/// </summary>
+		/// <param name="occupier">Solun varaava olio</param>
+		/// <param name="gridPosition">Solun sijainti koordinaatistossa.</param>
+		/// <returns>True, jos varaaminen onnistuu. False muuten.</returns>
+		public bool OccupyCell(ICellOccupier occupier, Vector2I gridPosition)
+		{
+			if (IsInvalidCoordinate(gridPosition))
+			{
+				return false;
+			}
+
+			Cell cell = _cells[gridPosition.X, gridPosition.Y];
+			bool canOccupy = cell.Occupy(occupier);
+			if (canOccupy)
+			{
+				// Solu on varattu, poista se _freeCells-listalta.
+				_freeCells.Remove(cell);
+			}
+
+			return canOccupy;
+		}
+
+		/// <summary>
+		/// Vapauttaa solun.
+		/// </summary>
+		/// <param name="gridPosition">Solun sijainti gridin koordinaatistossa.</param>
+		/// <returns>True, jos vapautus onnistuu. False muuten.</returns>
+		public bool ReleaseCell(Vector2I gridPosition)
+		{
+			if (IsInvalidCoordinate(gridPosition))
+			{
+				return false;
+			}
+
+			Cell cell = _cells[gridPosition.X, gridPosition.Y];
+			cell.Release();
+			_freeCells.Add(cell);
+
+			return true;
+		}
+
+		/// <summary>
+		/// Palauttaa satunnaisen vapaan solun gridiltä.
+		/// </summary>
+		/// <returns>Satunnainen vapaa solu</returns>
+		public Cell GetRandomFreeCell()
+		{
+			// Koska lista indeksoidaan C#-kielessä nollasta alkaen, pitää listan
+			// pituudesta vähentää yksi, jotta saadaan oikeat luvut mukaan randomiin.
+			int randomIndex = GD.RandRange(0, _freeCells.Count - 1);
+			return _freeCells[randomIndex];
 		}
 	}
 }
